@@ -1,0 +1,35 @@
+version: '2.3'
+
+services:
+
+  my_container:
+    image: my_image
+    container_name: my_container
+    working_dir: /code
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    environment:
+      - PYTHONPATH=/code
+      - DISPLAY=unix$DISPLAY
+    env_file:
+      - ../config/.env
+    ports:
+     - "8888:8888"
+    volumes:
+      - ../:/code
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /media/enric/enric_hdd/datasets/EE544_assignment:/data:ro    
+    runtime: nvidia
+    command: jupyter notebook --allow-root --notebook-dir='/code/src/notebooks'
+
+  tensorboard:
+    image: tensorflow/tensorflow:latest-gpu
+    container_name: tensorboard
+    working_dir: /logs
+    ports:
+     - "6006:6006"
+    volumes:
+      - ../logs:/logs
+    runtime: nvidia
+    command: tensorboard --logdir /logs
