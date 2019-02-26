@@ -1,6 +1,6 @@
 # Select a base image:
 
-FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:1.11.0-gpu
 #python:3.7
 #tensorflow/tensorflow:latest-gpu
 #tensorflow/tensorflow:latest-gpu-py3
