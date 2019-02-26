@@ -19,15 +19,15 @@ from keras.applications import InceptionV3
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '3.0.12'
+experiment = '3.0.18'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 image_size = 299
 epochs = 50
 batch_size = 32 #32 works too
-steps_per_epoch = 2000
-validation_steps = 800
+steps_per_epoch = 500
+validation_steps = 200
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
@@ -58,13 +58,9 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dense(128, activation='relu')(x)
-predictions = Dense(1, activation='softmax')(x)
+# x = Dense(12, activation='relu')(x)
+predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
-
-
-for i, layer in enumerate(base_model.layers):
-   print(i, layer.name)
 
 # we chose to train the top 2 inception blocks, i.e. we will freeze
 # the first 249 layers and unfreeze the rest:
@@ -74,10 +70,10 @@ for layer in model.layers[249:]:
    layer.trainable = True
 print(model.summary())
 # Define optimizer
-sgd = optimizers.SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 
 model.compile(loss = 'binary_crossentropy',
-              optimizer = 'rmsprop',
+              optimizer = 'sgd',
               metrics = ['accuracy'])
 
 # Tensorboard
