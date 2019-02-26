@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) Copyright 2019 Enric Moreu. All Rights Reserved.
+
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
@@ -6,12 +10,12 @@ from keras import callbacks
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.0.0'
+experiment = '1.1.0'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
-epochs = 20
-batch_size = 64
+epochs = 50
+batch_size = 128
 steps_per_epoch = 2000
 validation_steps = 800
 
