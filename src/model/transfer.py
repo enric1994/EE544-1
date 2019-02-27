@@ -19,7 +19,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '3.1.13'
+experiment = '3.1.14'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -89,7 +89,7 @@ for layer in model.layers[249:]:
 # print(model.summary())
 
 # Define optimizer
-sgd = optimizers.SGD(lr=0.000001, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = sgd,
