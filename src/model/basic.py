@@ -8,26 +8,26 @@ from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatt
 from keras import callbacks
 from keras import optimizers
 
+from utils.clr import OneCycleLR
 
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '1.3.1'
+experiment = '1.3.19'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
-epochs = 200
+epochs = 50
 batch_size = 32
+lr=0 #not used
+max_lr=3e-3
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
         zoom_range=0.2,
-        featurewise_center=True,
         samplewise_center=True,
-        featurewise_std_normalization=True,
         samplewise_std_normalization=True,
-        zca_whitening=True,
         rotation_range=45,
         width_shift_range=0.2,
         height_shift_range=0.2,
@@ -70,11 +70,13 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-opt = optimizers.SGD(lr=1.5e-1)
+opt = optimizers.SGD(lr=lr, momentum=0)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
               metrics = ['accuracy'])
+
+## Callbacks
 
 # LR reduce
 reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1,
@@ -86,10 +88,26 @@ tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 # Checkpoints
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
+# One Cycle
+lr_manager = OneCycleLR(max_lr, batch_size, 1600, end_percentage=0.8,
+                        maximum_momentum=0, minimum_momentum=0, verbose=True)
+# max_lr,
+#                  epochs,
+#                  batch_size,
+#                  samples,
+#                  end_percentage=0.1,
+#                  scale_percentage=None,
+#                  maximum_momentum=0.95,
+#                  minimum_momentum=0.85,
+#                  verbose=True
+# max_lr=0.02, maximum_momentum=0.9, verbose=True
+                        # end_percentage=1e-3, scale_percentage=0.1,
+                        # maximum_momentum=0.95, minimum_momentum=0.85, verbose=True)
+
 model.fit_generator(
         train_generator,
         epochs=epochs,
         validation_data=validation_generator,
-        callbacks=[tbCallBack, checkpoints,reduce_lr],
+        callbacks=[tbCallBack, checkpoints,lr_manager],
         shuffle=True,
         verbose=1)
