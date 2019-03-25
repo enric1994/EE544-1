@@ -43,4 +43,5 @@ services:
       - ../config/.env
     volumes:
       - ../:/root/project/code-server
+      - ~/.gitconfig:/etc/gitconfig
     command: code-server --allow-http --password=password

@@ -3,3 +3,4 @@ src/notebooks/.ipynb_checkpoints
 *.pyc
 *.png
 logs/
+checkpoints/

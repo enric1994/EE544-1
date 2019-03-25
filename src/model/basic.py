@@ -6,25 +6,28 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras import callbacks
+from keras import optimizers
 
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.1.0'
+experiment = '1.2.2'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
-epochs = 50
-batch_size = 128
+epochs = 100
+batch_size = 64
 steps_per_epoch = 2000
-validation_steps = 800
+validation_steps = 400
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-        shear_range=0.2,
         zoom_range=0.2,
-        horizontal_flip=True)
+        horizontal_flip=True,
+        rotation_range=15,
+        width_shift_range=.15,
+        height_shift_range=.15)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -32,7 +35,14 @@ train_generator = train_datagen.flow_from_directory(
         batch_size=batch_size,
         class_mode='binary') 
 
-validation_datagen = ImageDataGenerator(rescale=1./255)
+validation_datagen = ImageDataGenerator(
+        rescale=1./255,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=15,
+        width_shift_range=.15,
+        height_shift_range=.15)
+
 validation_generator = train_datagen.flow_from_directory(
         validation_path,
         target_size=(224, 224),
@@ -60,14 +70,22 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-#sgd = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = optimizers.SGD(lr=1e-4, decay=0, momentum=0.8, nesterov=False)
 
 model.compile(loss = 'binary_crossentropy',
-              optimizer = 'sgd',
+              optimizer = sgd,
               metrics = ['accuracy'])
+
+# LR reduce
+reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
+                              patience=10, min_lr=0.0000000001, verbose=2)
 
 # Tensorboard
 tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
+
+# Checkpoints
+checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=2, save_best_only=True, save_weights_only=False, mode='auto', period=1)
+
 
 model.fit_generator(
         train_generator,
@@ -75,4 +93,4 @@ model.fit_generator(
         epochs=epochs,
         validation_data=validation_generator,
         validation_steps=validation_steps // batch_size,
-        callbacks=[tbCallBack])
+        callbacks=[tbCallBack, checkpoints])
