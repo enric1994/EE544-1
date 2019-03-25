@@ -11,7 +11,7 @@ from keras import optimizers
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.2.3'
+experiment = '1.2.4'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -71,7 +71,7 @@ model.add(Activation('sigmoid'))
 
 # Define optimizer
 # opt = optimizers.SGD(lr=1e-4, decay=0, momentum=0.8, nesterov=False)
-opt = optimizers.Adam(lr=1e-3, decay=1e-3 / epochs)
+opt = optimizers.Adam(lr=1e-5, decay=1e-5 / epochs)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
