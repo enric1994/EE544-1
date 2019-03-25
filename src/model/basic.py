@@ -13,14 +13,14 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '1.3.19'
+experiment = '1.3.20'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
-epochs = 50
+epochs = 100
 batch_size = 32
 lr=0 #not used
-max_lr=3e-3
+max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
@@ -89,7 +89,7 @@ tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
 # One Cycle
-lr_manager = OneCycleLR(max_lr, batch_size, 1600, end_percentage=0.8,
+lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
                         maximum_momentum=0, minimum_momentum=0, verbose=True)
 # max_lr,
 #                  epochs,
