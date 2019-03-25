@@ -4,3 +4,5 @@ src/notebooks/.ipynb_checkpoints
 *.png
 logs/
 checkpoints/
+.Trash-0/
+*.npy

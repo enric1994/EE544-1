@@ -11,3 +11,4 @@ python3-dev
 libsm6
 libxext6
 libxrender-dev
+python-tk

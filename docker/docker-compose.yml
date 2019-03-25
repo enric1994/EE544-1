@@ -10,7 +10,7 @@ services:
       context: ../
       dockerfile: docker/Dockerfile
     environment:
-      - PYTHONPATH=/code
+      - PYTHONPATH=/code/src
       - DISPLAY=unix$DISPLAY
     env_file:
       - ../config/.env
