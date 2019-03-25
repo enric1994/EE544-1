@@ -24,7 +24,7 @@ services:
     command: jupyter notebook --allow-root --notebook-dir='/code/src/notebooks'
 
   tensorboard:
-    image: tensorflow/tensorflow:latest-gpu
+    image: tensorflow/tensorflow:1.11.0-gpu
     container_name: tensorboard
     working_dir: /logs
     ports:
@@ -33,3 +33,14 @@ services:
       - ../logs:/logs
     runtime: nvidia
     command: tensorboard --logdir /logs
+
+  vscode:
+    image: codercom/code-server
+    container_name: vscode
+    ports:
+     - "8443:8443"
+    env_file:
+      - ../config/.env
+    volumes:
+      - ../:/root/project/code-server
+    command: code-server --allow-http --password=password
