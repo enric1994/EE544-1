@@ -11,14 +11,14 @@ from keras import optimizers
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.2.2'
+experiment = '1.2.3'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 epochs = 100
-batch_size = 64
+batch_size = 128
 steps_per_epoch = 2000
-validation_steps = 400
+validation_steps = 800
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
@@ -70,10 +70,11 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-sgd = optimizers.SGD(lr=1e-4, decay=0, momentum=0.8, nesterov=False)
+# opt = optimizers.SGD(lr=1e-4, decay=0, momentum=0.8, nesterov=False)
+opt = optimizers.Adam(lr=1e-3, decay=1e-3 / epochs)
 
 model.compile(loss = 'binary_crossentropy',
-              optimizer = sgd,
+              optimizer = opt,
               metrics = ['accuracy'])
 
 # LR reduce
