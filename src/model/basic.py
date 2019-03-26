@@ -13,13 +13,13 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '1.3.21'
+experiment = '1.3.22'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 epochs = 200
 batch_size = 32
-lr=0 #not used
+lr=1e-1
 max_lr=1e-1
 
 #Load data + augmentation
@@ -108,6 +108,6 @@ model.fit_generator(
         train_generator,
         epochs=epochs,
         validation_data=validation_generator,
-        callbacks=[tbCallBack, checkpoints,lr_manager],
+        callbacks=[tbCallBack, checkpoints],
         shuffle=True,
         verbose=1)
