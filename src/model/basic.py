@@ -16,7 +16,7 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.5'
+experiment = '1.4.7'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -28,11 +28,11 @@ max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
-        rescale=1./255,
+        rescale=1./255)
         # zoom_range=0.2,
         # samplewise_center=True,
         # samplewise_std_normalization=True,
-        rotation_range=20,
+        #rotation_range=20)
         # width_shift_range=0.2,
         # height_shift_range=0.2,
         # horizontal_flip=True)
@@ -115,7 +115,7 @@ model.fit_generator(
         callbacks=[tbCallBack, checkpoints, tnan],
         shuffle=True,
         verbose=1,
-        workers=4,
+        workers=2,
         use_multiprocessing=True)
 
 ## Evaluate model
@@ -127,7 +127,7 @@ best_model = load_model('/code/checkpoints/{}.weights'.format(experiment))
 
 # Forward test images
 results = best_model.evaluate_generator(test_generator,
-        workers=4,
+        workers=2,
         use_multiprocessing=True)
 
 end = time.time()
