@@ -13,7 +13,7 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.3.27'
+experiment = '1.3.28'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -28,10 +28,10 @@ train_datagen = ImageDataGenerator(
         # zoom_range=0.2,
         # samplewise_center=True,
         # samplewise_std_normalization=True,
-        # rotation_range=45,
+        rotation_range=45,
         # width_shift_range=0.2,
         # height_shift_range=0.2,
-        # horizontal_flip=True,
+        horizontal_flip=True,
         # vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
@@ -91,23 +91,13 @@ checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(ex
 # One Cycle
 lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
                         maximum_momentum=0, minimum_momentum=0, verbose=True)
-# max_lr,
-#                  epochs,
-#                  batch_size,
-#                  samples,
-#                  end_percentage=0.1,
-#                  scale_percentage=None,
-#                  maximum_momentum=0.95,
-#                  minimum_momentum=0.85,
-#                  verbose=True
-# max_lr=0.02, maximum_momentum=0.9, verbose=True
-                        # end_percentage=1e-3, scale_percentage=0.1,
-                        # maximum_momentum=0.95, minimum_momentum=0.85, verbose=True)
+# Terminate on NaN
+tnan = callbacks.TerminateOnNaN()
 
 model.fit_generator(
         train_generator,
         epochs=epochs,
         validation_data=validation_generator,
-        callbacks=[tbCallBack, checkpoints],
+        callbacks=[tbCallBack, checkpoints, tnan],
         shuffle=True,
         verbose=1)
