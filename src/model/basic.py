@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 # (c) Copyright 2019 Enric Moreu. All Rights Reserved.
 
+import time
+start = time.time()
+
 from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras import callbacks
 from keras import optimizers
@@ -13,27 +16,27 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.1'
+experiment = '1.4.2'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 200
+epochs = 300
 batch_size = 128
 lr=1e-2
 max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
-        rescale=1./255)
-        # zoom_range=0.2,
-        # samplewise_center=True,
-        # samplewise_std_normalization=True,
-        # rotation_range=45,
-        # width_shift_range=0.2,
-        # height_shift_range=0.2,
-        # horizontal_flip=True)
-        # vertical_flip=True)
+        rescale=1./255,
+        zoom_range=0.2,
+        samplewise_center=True,
+        samplewise_std_normalization=True,
+        rotation_range=45,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        horizontal_flip=True,
+        vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -44,12 +47,20 @@ train_generator = train_datagen.flow_from_directory(
 validation_datagen = ImageDataGenerator(
         rescale=1./255)
 
-validation_generator = train_datagen.flow_from_directory(
+validation_generator = validation_datagen.flow_from_directory(
         validation_path,
         target_size=(224, 224),
         batch_size=batch_size,
-        class_mode='binary') 
+        class_mode='binary')
 
+test_datagen = ImageDataGenerator(
+        rescale=1./255)
+
+test_generator = test_datagen.flow_from_directory(
+        test_path,
+        target_size=(224, 224),
+        batch_size=batch_size,
+        class_mode='binary')
 
 # Define model
 model = Sequential()
@@ -71,7 +82,7 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-opt = optimizers.SGD(lr=lr, momentum=0)
+opt = optimizers.SGD(lr=lr)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -108,16 +119,22 @@ model.fit_generator(
         use_multiprocessing=True)
 
 ## Evaluate model
-test_generator = train_datagen.flow_from_directory(
-        test_path,
-        target_size=(224, 224),
-        batch_size=batch_size,
-        class_mode='binary')
 
-results = model.evaluate_generator(test_generator,
+# Load best model
+best_model = load_model('/code/checkpoints/{}.weights'.format(experiment))
+
+
+
+# Forward test images
+results = best_model.evaluate_generator(test_generator,
         workers=4,
         use_multiprocessing=True)
 
-send('''Experiment {} finished:
+end = time.time()
+total_time = (end - start) // 60
+
+send('''Experiment {} finished in {} min
+
+LR: {}
 Test accuracy: {}
-'''.format(experiment, results[1]*100))
+'''.format(experiment, int(total_time), lr, '%.2f'%(results[1]*100)))
