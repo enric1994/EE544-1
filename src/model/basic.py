@@ -16,12 +16,12 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.4'
+experiment = '1.4.5'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 50
+epochs = 200
 batch_size = 128
 lr=1e-2
 max_lr=1e-1
@@ -29,13 +29,13 @@ max_lr=1e-1
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-        zoom_range=0.2,
+        # zoom_range=0.2,
         # samplewise_center=True,
         # samplewise_std_normalization=True,
         rotation_range=20,
         # width_shift_range=0.2,
         # height_shift_range=0.2,
-        horizontal_flip=True)
+        # horizontal_flip=True)
         # vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(

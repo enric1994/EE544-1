@@ -39,8 +39,6 @@ services:
     container_name: vscode
     ports:
      - "8443:8443"
-    env_file:
-      - ../config/.env
     volumes:
       - ../:/root/project/code-server
       - ~/.gitconfig:/etc/gitconfig
