@@ -1,5 +1,6 @@
 ## Uncomment the Python packages you want to install
 
+telebot
 
 ## Data science:
 
