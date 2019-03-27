@@ -16,27 +16,27 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.7'
+experiment = '1.4.11'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 200
-batch_size = 128
+epochs = 300
+batch_size = 64
 lr=1e-2
 max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255)
-        # zoom_range=0.2,
-        # samplewise_center=True,
-        # samplewise_std_normalization=True,
-        #rotation_range=20)
-        # width_shift_range=0.2,
-        # height_shift_range=0.2,
-        # horizontal_flip=True)
-        # vertical_flip=True)
+#        zoom_range=0.2,
+#        samplewise_center=True,
+#        samplewise_std_normalization=True,
+#        rotation_range=20,
+#        width_shift_range=0.2,
+#        height_shift_range=0.2)
+#        horizontal_flip=True,
+#        vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -64,19 +64,19 @@ test_generator = test_datagen.flow_from_directory(
 
 # Define model
 model = Sequential()
-model.add(Conv2D(128, (3, 3), input_shape=(224,224,3)))
+model.add(Conv2D(256, (3, 3), input_shape=(224,224,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(64, (3, 3)))
+model.add(Conv2D(128, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(64, (3, 3)))
+model.add(Conv2D(128, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
-model.add(Dense(64))
-model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(128))
 model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
