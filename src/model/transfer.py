@@ -9,8 +9,10 @@ start = time.time()
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model, load_model
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Dropout, Flatten
+from keras.layers.normalization import BatchNormalization
 from keras import callbacks
 from keras import optimizers
+from keras import regularizers
 from utils.telegram import send
 from utils.clr import OneCycleLR
 from keras.applications import InceptionV3
@@ -19,7 +21,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.0'
+experiment = '3.2.3'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -34,14 +36,15 @@ max_lr=1e-1
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-       zoom_range=0.2,
+       zoom_range=0.3,
+       fill_mode='nearest',
 #        samplewise_center=True,
 #        samplewise_std_normalization=True,
-        rotation_range=20)
+        rotation_range=40,
 #        width_shift_range=0.2,
 #        height_shift_range=0.2,
-#        horizontal_flip=True,
-#        vertical_flip=True)
+       horizontal_flip=True,
+       vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -74,6 +77,8 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
+x = BatchNormalization()(x)
+x = Activation('relu')(x)
 x = Dropout(0.5)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
@@ -83,8 +88,13 @@ for layer in model.layers[:249]:
 for layer in model.layers[249:]:
    layer.trainable = True
 
+alpha = 0.00002
+for layer in model.layers:
+    if isinstance(layer, Conv2D) or isinstance(layer, Dense):
+        layer.add_loss(regularizers.l2(alpha)(layer.kernel))
+
 # Define optimizer
-opt = optimizers.Adam(lr=1e-5, decay=0)
+opt = optimizers.Adam(lr=1e-4, decay=0)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
