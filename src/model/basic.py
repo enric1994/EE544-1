@@ -16,13 +16,13 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.19'
+experiment = '1.4.20'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
 epochs = 25
-batch_size = 64
+batch_size = 128
 lr=1e-2
 max_lr=1e-1
 
@@ -64,19 +64,19 @@ test_generator = test_datagen.flow_from_directory(
 
 # Define model
 model = Sequential()
-model.add(Conv2D(256, (3, 3), input_shape=(224,224,3)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(256, (3, 3)))
+model.add(Conv2D(128, (3, 3), input_shape=(224,224,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(128, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(64, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 model.add(Dropout(0.2))
-model.add(Dense(128))
+model.add(Dense(32))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
