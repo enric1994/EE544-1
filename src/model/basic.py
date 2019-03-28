@@ -16,14 +16,14 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '1.5.9'
+experiment = '1.5.13'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 80
-batch_size = 64
-lr=5e-2
+epochs = 140
+batch_size = 32
+lr=1e-5
 max_lr=1e-1
 
 #Load data + augmentation
@@ -75,7 +75,7 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
-model.add(Dropout(0.3))
+model.add(Dropout(0.2))
 model.add(Dense(32))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
@@ -121,7 +121,7 @@ model.fit_generator(
        shuffle=True,
        verbose=1,
        workers=4,
-       use_multiprocessing=False)
+       use_multiprocessing=True)
 
 ## Evaluate model
 
