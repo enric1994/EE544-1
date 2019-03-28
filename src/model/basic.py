@@ -13,17 +13,17 @@ from keras import optimizers
 from utils.telegram import send
 from utils.clr import OneCycleLR
 
-import keras.backend as K
-K.set_floatx('float16')
+# import keras.backend as K
+# K.set_floatx('float16')
 
-experiment = '1.5.0'
+experiment = '1.5.8'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 100
-batch_size = 128
-lr=1e-2
+epochs = 50
+batch_size = 64
+lr=1e-4
 max_lr=1e-1
 
 #Load data + augmentation
@@ -75,13 +75,15 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
-model.add(Dropout(0.1))
+model.add(Dropout(0.3))
 model.add(Dense(32))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-opt = optimizers.SGD(lr=lr)
+opt = optimizers.RMSprop(lr=lr, rho=0.9, epsilon=None, decay=0.0)
+# opt = optimizers.SGD(lr=lr)
+
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -111,11 +113,15 @@ model.fit_generator(
        train_generator,
        epochs=epochs,
        validation_data=validation_generator,
-       callbacks=[tbCallBack, checkpoints, tnan],
+       callbacks=[
+        tbCallBack,
+        checkpoints,
+        # tnan
+        ],
        shuffle=True,
        verbose=1,
        workers=4,
-       use_multiprocessing=True)
+       use_multiprocessing=False)
 
 ## Evaluate model
 
