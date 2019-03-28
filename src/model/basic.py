@@ -16,27 +16,27 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.11'
+experiment = '1.4.16'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 300
-batch_size = 64
-lr=1e-2
+epochs = 100
+batch_size = 128
+lr=1.5e-2
 max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
-        rescale=1./255)
-#        zoom_range=0.2,
+        rescale=1./255,
+       zoom_range=0.2,
 #        samplewise_center=True,
 #        samplewise_std_normalization=True,
-#        rotation_range=20,
-#        width_shift_range=0.2,
-#        height_shift_range=0.2)
-#        horizontal_flip=True,
-#        vertical_flip=True)
+        rotation_range=20,
+       width_shift_range=0.2,
+       height_shift_range=0.2,
+       horizontal_flip=True,
+       vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -64,20 +64,19 @@ test_generator = test_datagen.flow_from_directory(
 
 # Define model
 model = Sequential()
-model.add(Conv2D(256, (3, 3), input_shape=(224,224,3)))
+model.add(Conv2D(128, (3, 3), input_shape=(224,224,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(128, (3, 3)))
+model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(128, (3, 3)))
+model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
-model.add(Dropout(0.5))
-model.add(Dense(128))
-model.add(Dropout(0.5))
+model.add(Dropout(0.1))
+model.add(Dense(32))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
@@ -109,14 +108,14 @@ tnan = callbacks.TerminateOnNaN()
 
 ## Train model
 model.fit_generator(
-        train_generator,
-        epochs=epochs,
-        validation_data=validation_generator,
-        callbacks=[tbCallBack, checkpoints, tnan],
-        shuffle=True,
-        verbose=1,
-        workers=2,
-        use_multiprocessing=True)
+       train_generator,
+       epochs=epochs,
+       validation_data=validation_generator,
+       callbacks=[tbCallBack, checkpoints, tnan],
+       shuffle=True,
+       verbose=1,
+       workers=4,
+       use_multiprocessing=True)
 
 ## Evaluate model
 
@@ -131,9 +130,9 @@ results = best_model.evaluate_generator(test_generator,
         use_multiprocessing=True)
 
 end = time.time()
-total_time = (end - start) // 60
+total_time = (end - start)
 
-send('''Experiment {} finished in {} min
+send('''Experiment {} finished in {} seconds
 
 LR: {}
 Test accuracy: {}
