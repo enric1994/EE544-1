@@ -16,7 +16,7 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.4.17'
+experiment = '1.4.18'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -64,13 +64,13 @@ test_generator = test_datagen.flow_from_directory(
 
 # Define model
 model = Sequential()
-model.add(Conv2D(128, (3, 3), input_shape=(224,224,3)))
+model.add(Conv2D(32, (3, 3), input_shape=(224,224,3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(32, (3, 3)))
+model.add(Conv2D(128, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
