@@ -21,7 +21,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.3'
+experiment = '3.2.4'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -77,7 +77,7 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = BatchNormalization()(x)
+# x = BatchNormalization()(x)
 x = Activation('relu')(x)
 x = Dropout(0.5)(x)
 predictions = Dense(1, activation='sigmoid')(x)
@@ -88,11 +88,13 @@ for layer in model.layers[:249]:
 for layer in model.layers[249:]:
    layer.trainable = True
 
-alpha = 0.00002
-for layer in model.layers:
-    if isinstance(layer, Conv2D) or isinstance(layer, Dense):
-        layer.add_loss(regularizers.l2(alpha)(layer.kernel))
+model.summary()
 
+alpha = 0.0002
+for layer in model.layers:
+    if isinstance(layer, Conv2D):
+        layer.add_loss(regularizers.l2(alpha)(layer.kernel))
+model.summary()
 # Define optimizer
 opt = optimizers.Adam(lr=1e-4, decay=0)
 
