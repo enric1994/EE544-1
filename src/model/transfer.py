@@ -21,15 +21,17 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.4'
+experiment = '3.2.7'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 500
+epochs = 100
 batch_size = 64
-lr=1e-5
+lr = 1e-3
+decay = 1e-4
 max_lr=1e-1
+alpha = 0.01
 
 
 
@@ -41,8 +43,8 @@ train_datagen = ImageDataGenerator(
 #        samplewise_center=True,
 #        samplewise_std_normalization=True,
         rotation_range=40,
-#        width_shift_range=0.2,
-#        height_shift_range=0.2,
+       width_shift_range=0.3,
+       height_shift_range=0.3,
        horizontal_flip=True,
        vertical_flip=True)
 
@@ -78,8 +80,8 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
 # x = BatchNormalization()(x)
-x = Activation('relu')(x)
-x = Dropout(0.5)(x)
+# x = Activation('relu')(x)
+x = Dropout(0.2)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
@@ -88,15 +90,12 @@ for layer in model.layers[:249]:
 for layer in model.layers[249:]:
    layer.trainable = True
 
-model.summary()
-
-alpha = 0.0002
 for layer in model.layers:
     if isinstance(layer, Conv2D):
         layer.add_loss(regularizers.l2(alpha)(layer.kernel))
-model.summary()
+
 # Define optimizer
-opt = optimizers.Adam(lr=1e-4, decay=0)
+opt = optimizers.Adam(lr=lr, decay=decay)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
