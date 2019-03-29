@@ -21,7 +21,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.3.5'
+experiment = '3.3.6'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -86,16 +86,21 @@ base_model.layers.pop()
 
 x = base_model.output
 # x = GlobalAveragePooling2D()(x)
-x = Dense(1024, name='dense_2', activation='relu')(x)
-# x = BatchNormalization(name='batch_normalization_XX')(x)
-# x = Activation('relu')(x)
+x = Dense(1024, name='dense_2')(x)
+x = BatchNormalization(name='batch_normalization_95')(x)
+x = Activation('relu',name='activation_95')(x)
 x = Dropout(0.5, name='dropout_2')(x)
-x = Dense(512, name='dense_3', activation='relu')(x)
-# x = BatchNormalization()(x)
-# x = Activation('relu')(x)
+
+x = Dense(512, name='dense_3')(x)
+x = BatchNormalization(name='batch_normalization_96')(x)
+x = Activation('relu',name='activation_96')(x)
 x = Dropout(0.5, name='dropout_3')(x)
-x = Dense(128, name='dense_4', activation='relu')(x)
+
+x = Dense(128, name='dense_4')(x)
+x = BatchNormalization(name='batch_normalization_97')(x)
+x = Activation('relu',name='activation_97')(x)
 x = Dropout(0.5, name='dropout_4')(x)
+
 predictions = Dense(1, name='dense_5', activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
