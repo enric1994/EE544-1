@@ -21,17 +21,17 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.9'
+experiment = '3.2.10'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 150
 batch_size = 64
-lr = 5e-5
+lr = 1e-6
 decay = 0
 max_lr=1e-1
-alpha = 0.1
+alpha = 0.0005
 
 
 
