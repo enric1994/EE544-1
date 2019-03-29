@@ -2,34 +2,43 @@
 # -*- coding: utf-8 -*-
 # (c) Copyright 2019 Enric Moreu. All Rights Reserved.
 
+import time
+start = time.time()
+
 from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras import callbacks
 from keras import optimizers
-
+from utils.telegram import send
+from utils.clr import OneCycleLR
 
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '2.3.3'
+experiment = '2.6.2'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
-epochs = 250
-batch_size = 32
-steps_per_epoch = 2000
-validation_steps = 800
+test_path = '/data/resized_224/test'
+epochs = 500
+batch_size = 128
+lr=5e-2
+decay=0
+max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True)
-
-val_datagen = ImageDataGenerator(
-        rescale=1./255)
+       zoom_range=0.3,
+       fill_mode='nearest',
+#        samplewise_center=True,
+#        samplewise_std_normalization=True,
+        rotation_range=40,
+       width_shift_range=0.3,
+       height_shift_range=0.3,
+       horizontal_flip=True,
+       vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -37,12 +46,23 @@ train_generator = train_datagen.flow_from_directory(
         batch_size=batch_size,
         class_mode='binary') 
 
-validation_datagen = ImageDataGenerator(rescale=1./255)
-validation_generator = val_datagen.flow_from_directory(
+validation_datagen = ImageDataGenerator(
+        rescale=1./255)
+
+validation_generator = validation_datagen.flow_from_directory(
         validation_path,
         target_size=(224, 224),
         batch_size=batch_size,
-        class_mode='binary') 
+        class_mode='binary')
+
+test_datagen = ImageDataGenerator(
+        rescale=1./255)
+
+test_generator = test_datagen.flow_from_directory(
+        test_path,
+        target_size=(224, 224),
+        batch_size=batch_size,
+        class_mode='binary')
 
 
 # Define model
@@ -98,23 +118,66 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-sgd = optimizers.SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+opt = optimizers.Adam(lr=lr,decay=decay)
+# opt = optimizers.SGD(lr=lr)
 
-# LR scheduler
-reduce_lr = callbacks.ReduceLROnPlateau(monitor='accuracy', factor=0.3,
-                              patience=5, min_lr=0.00000001)
 
 model.compile(loss = 'binary_crossentropy',
-              optimizer = 'sgd',
+              optimizer = opt,
               metrics = ['accuracy'])
+
+## Callbacks
+
+# LR reduce
+reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
+                              patience=10, min_lr=1e-7, verbose=1)
 
 # Tensorboard
 tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 
+# Checkpoints
+checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
+
+# One Cycle
+lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
+                        maximum_momentum=0, minimum_momentum=0, verbose=True)
+# Terminate on NaN
+tnan = callbacks.TerminateOnNaN()
+
+
+## Train model
 model.fit_generator(
-        train_generator,
-        steps_per_epoch=steps_per_epoch // batch_size,
-        epochs=epochs,
-        validation_data=validation_generator,
-        validation_steps=validation_steps // batch_size,
-        callbacks=[tbCallBack, reduce_lr])
+       train_generator,
+       epochs=epochs,
+       validation_data=validation_generator,
+       callbacks=[
+        tbCallBack,
+        checkpoints,
+        reduce_lr
+        # tnan
+        ],
+       shuffle=True,
+       verbose=1,
+       workers=4,
+       use_multiprocessing=True)
+
+## Evaluate model
+
+# Load best model
+best_model = load_model('/code/checkpoints/{}.weights'.format(experiment))
+
+
+
+# Forward test images
+results = best_model.evaluate_generator(test_generator,
+        workers=4,
+        use_multiprocessing=True)
+
+end = time.time()
+total_time = (end - start)
+
+send('''Experiment {} finished in {} seconds
+
+LR: {}
+Test accuracy: {}
+'''.format(experiment, int(total_time), lr, '%.2f'%(results[1]*100)))
