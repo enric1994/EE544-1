@@ -21,15 +21,15 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.3.3'
+experiment = '3.3.5'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 100
 batch_size = 64
-lr = 5e-4
-decay = 1e-5
+lr = 1e-4
+decay = 0
 max_lr=1e-1
 l1 = 0.005
 l2 = 0.005
@@ -89,13 +89,13 @@ x = base_model.output
 x = Dense(1024, name='dense_2', activation='relu')(x)
 # x = BatchNormalization(name='batch_normalization_XX')(x)
 # x = Activation('relu')(x)
-x = Dropout(0.2, name='dropout_2')(x)
+x = Dropout(0.5, name='dropout_2')(x)
 x = Dense(512, name='dense_3', activation='relu')(x)
 # x = BatchNormalization()(x)
 # x = Activation('relu')(x)
-x = Dropout(0.2, name='dropout_3')(x)
+x = Dropout(0.5, name='dropout_3')(x)
 x = Dense(128, name='dense_4', activation='relu')(x)
-x = Dropout(0.2, name='dropout_4')(x)
+x = Dropout(0.5, name='dropout_4')(x)
 predictions = Dense(1, name='dense_5', activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
