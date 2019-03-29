@@ -21,15 +21,15 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.3.0'
+experiment = '3.3.1'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 50
 batch_size = 64
-lr = 5e-4
-decay = 0
+lr = 1e-3
+decay = 1e-4
 max_lr=1e-1
 l1 = 0.005
 l2 = 0.005
@@ -83,8 +83,6 @@ base_model = load_model('/code/checkpoints/{}.weights'.format(fine_model))
 base_model.layers.pop()
 base_model.layers.pop()
 
-base_model.summary()
-
 
 x = base_model.output
 # x = GlobalAveragePooling2D()(x)
@@ -105,8 +103,6 @@ for layer in model.layers[-10:]:
    layer.trainable = True
 #    if isinstance(layer, Conv2D):
 #         layer.add_loss(regularizers.l1_l2(l1=l1, l2=l2)(layer.kernel))
-
-model.summary()
 
 # for layer in model.layers:
 #     if isinstance(layer, Conv2D):
