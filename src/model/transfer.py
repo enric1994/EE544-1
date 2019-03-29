@@ -21,18 +21,18 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.3.6'
+experiment = '3.4.7'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 100
 batch_size = 64
-lr = 1e-4
+lr = 1e-2
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.005
+l2 = 0.01
 fine_model = '3.2.8'
 
 
@@ -86,20 +86,20 @@ base_model.layers.pop()
 
 x = base_model.output
 # x = GlobalAveragePooling2D()(x)
-x = Dense(1024, name='dense_2')(x)
-x = BatchNormalization(name='batch_normalization_95')(x)
-x = Activation('relu',name='activation_95')(x)
-x = Dropout(0.5, name='dropout_2')(x)
+x = Dense(1024, name='dense_2', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_95')(x)
+# x = Activation('relu',name='activation_95')(x)
+x = Dropout(0.2, name='dropout_2')(x)
 
-x = Dense(512, name='dense_3')(x)
-x = BatchNormalization(name='batch_normalization_96')(x)
-x = Activation('relu',name='activation_96')(x)
-x = Dropout(0.5, name='dropout_3')(x)
+x = Dense(512, name='dense_3', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_96')(x)
+# x = Activation('relu',name='activation_96')(x)
+x = Dropout(0.2, name='dropout_3')(x)
 
-x = Dense(128, name='dense_4')(x)
-x = BatchNormalization(name='batch_normalization_97')(x)
-x = Activation('relu',name='activation_97')(x)
-x = Dropout(0.5, name='dropout_4')(x)
+x = Dense(128, name='dense_4', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_97')(x)
+# x = Activation('relu',name='activation_97')(x)
+x = Dropout(0.2, name='dropout_4')(x)
 
 predictions = Dense(1, name='dense_5', activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
@@ -116,7 +116,7 @@ for layer in model.layers[-10:]:
 #         layer.add_loss(regularizers.l2(alpha)(layer.kernel))
 
 # Define optimizer
-opt = optimizers.Adam(lr=lr, decay=decay)
+opt = optimizers.SGD(lr=lr, decay=decay)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
