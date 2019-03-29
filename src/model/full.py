@@ -16,14 +16,14 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '2.6.2'
+experiment = '2.6.3'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
 epochs = 500
-batch_size = 128
-lr=5e-2
+batch_size = 64
+lr=1e-2
 decay=0
 max_lr=1e-1
 
