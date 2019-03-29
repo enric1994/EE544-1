@@ -21,18 +21,19 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.13'
+experiment = '3.2.15'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 100
+epochs = 50
 batch_size = 64
-lr = 1e-4
+lr = 5e-4
 decay = 0
 max_lr=1e-1
-alpha = 0.001
-
+l1 = 0.005
+l2 = 0.005
+fine_model = '3.2.8'
 
 
 #Load data + augmentation
@@ -76,6 +77,7 @@ test_generator = test_datagen.flow_from_directory(
 
 # Define model
 base_model = InceptionV3(weights='imagenet', include_top=False)
+# base_model = load_model('/code/checkpoints/{}.weights'.format(fine_model))
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
@@ -90,7 +92,7 @@ for layer in model.layers[:249]:
 for layer in model.layers[249:]:
    layer.trainable = True
    if isinstance(layer, Conv2D):
-        layer.add_loss(regularizers.l1(alpha)(layer.kernel))
+        layer.add_loss(regularizers.l1_l2(l1=l1, l2=l2)(layer.kernel))
 
 # for layer in model.layers:
 #     if isinstance(layer, Conv2D):
