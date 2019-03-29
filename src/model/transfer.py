@@ -21,12 +21,12 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.2.12'
+experiment = '3.2.13'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 150
+epochs = 100
 batch_size = 64
 lr = 1e-4
 decay = 0
@@ -90,7 +90,7 @@ for layer in model.layers[:249]:
 for layer in model.layers[249:]:
    layer.trainable = True
    if isinstance(layer, Conv2D):
-        layer.add_loss(regularizers.l2(alpha)(layer.kernel))
+        layer.add_loss(regularizers.l1(alpha)(layer.kernel))
 
 # for layer in model.layers:
 #     if isinstance(layer, Conv2D):
@@ -149,10 +149,10 @@ results = best_model.evaluate_generator(test_generator,
         use_multiprocessing=True)
 
 end = time.time()
-total_time = (end - start)
+total_time = (end - start) // 60
 
-send('''Experiment {} finished in {} seconds
+send('''Experiment {} finished in {} minutes
 
 LR: {}
 Test accuracy: {}
-'''.format(experiment, int(total_time), lr, '%.2f'%(results[1]*100)))
+'''.format(experiment, int(total_time), lr, '%.3f'%(results[1]*100)))
