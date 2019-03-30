@@ -21,20 +21,19 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.5.1'
+experiment = '3.4.7'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 100
-steps_per_epoch = 300
-validation_steps=50
 batch_size = 64
-lr = 5e-4
+lr = 1e-2
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.05
+l2 = 0.01
+fine_model = '3.2.8'
 
 
 #Load data + augmentation
@@ -42,6 +41,8 @@ train_datagen = ImageDataGenerator(
         rescale=1./255,
         zoom_range=0.1,
        fill_mode='nearest',
+#        samplewise_center=True,
+#        samplewise_std_normalization=True,
         rotation_range=15)
 
 train_generator = train_datagen.flow_from_directory(
@@ -71,24 +72,47 @@ test_generator = test_datagen.flow_from_directory(
 
 
 # Define model
-base_model = InceptionV3(weights='imagenet', include_top=False)
+# base_model = InceptionV3(weights='imagenet', include_top=False)
+base_model = load_model('/code/checkpoints/{}.weights'.format(fine_model))
+
+# Remove last 2 layers
+base_model.layers.pop()
+base_model.layers.pop()
+
 
 x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = Dropout(0.2)(x)
-predictions = Dense(1, activation='sigmoid')(x)
+# x = GlobalAveragePooling2D()(x)
+x = Dense(1024, name='dense_2', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_95')(x)
+# x = Activation('relu',name='activation_95')(x)
+x = Dropout(0.2, name='dropout_2')(x)
+
+x = Dense(512, name='dense_3', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_96')(x)
+# x = Activation('relu',name='activation_96')(x)
+x = Dropout(0.2, name='dropout_3')(x)
+
+x = Dense(128, name='dense_4', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_97')(x)
+# x = Activation('relu',name='activation_97')(x)
+x = Dropout(0.2, name='dropout_4')(x)
+
+predictions = Dense(1, name='dense_5', activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-for layer in model.layers[:249]:
+for layer in model.layers[:-10]:
    layer.trainable = False
-for layer in model.layers[249:]:
+for layer in model.layers[-10:]:
    layer.trainable = True
-   if isinstance(layer, Conv2D):
-        layer.add_loss(regularizers.l2(l2)(layer.kernel))
+#    if isinstance(layer, Conv2D):
+#         layer.add_loss(regularizers.l1_l2(l1=l1, l2=l2)(layer.kernel))
 
+# for layer in model.layers:
+#     if isinstance(layer, Conv2D):
+#         layer.add_loss(regularizers.l2(alpha)(layer.kernel))
 
 # Define optimizer
-opt = optimizers.Adam(lr=lr)
+opt = optimizers.SGD(lr=lr, decay=decay)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -116,12 +140,10 @@ tnan = callbacks.TerminateOnNaN()
 model.fit_generator(
        train_generator,
        epochs=epochs,
-       steps_per_epoch=steps_per_epoch,
-       validation_steps=validation_steps,
        validation_data=validation_generator,
        callbacks=[
         tbCallBack,
-        checkpoints
+        checkpoints,
         # tnan
         ],
        shuffle=True,
