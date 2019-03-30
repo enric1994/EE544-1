@@ -16,7 +16,7 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '2.8.5'
+experiment = '2.8.6'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -105,7 +105,6 @@ model.add(Activation('relu'))
 model.add(Conv2D(512, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.5))
 
 model.add(Flatten())
 
