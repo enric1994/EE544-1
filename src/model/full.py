@@ -13,32 +13,34 @@ from keras import optimizers
 from utils.telegram import send
 from utils.clr import OneCycleLR
 
-import keras.backend as K
-K.set_floatx('float16')
+# import keras.backend as K
+# K.set_floatx('float16')
 
-experiment = '2.7.1'
+experiment = '2.8.4'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 200
-batch_size = 64
-lr=1e-5
+epochs = 300
+steps_per_epoch = 200
+validation_steps=50
+batch_size = 32
+lr=1e-6
 decay=0
 max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
-        rescale=1./255,
-       zoom_range=0.3,
-       fill_mode='nearest',
+        rescale=1./255)
+#        zoom_range=0.3,
+#        fill_mode='nearest',
 #        samplewise_center=True,
 #        samplewise_std_normalization=True,
-        rotation_range=40,
-       width_shift_range=0.3,
-       height_shift_range=0.3,
-       horizontal_flip=True,
-       vertical_flip=True)
+        # rotation_range=40)
+#        width_shift_range=0.3,
+#        height_shift_range=0.3,
+#        horizontal_flip=True,
+#        vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -149,11 +151,13 @@ tnan = callbacks.TerminateOnNaN()
 model.fit_generator(
        train_generator,
        epochs=epochs,
+       steps_per_epoch=steps_per_epoch,
+       validation_steps=validation_steps,
        validation_data=validation_generator,
        callbacks=[
         tbCallBack,
-        checkpoints,
-        reduce_lr
+        checkpoints
+        # reduce_lr
         # tnan
         ],
        shuffle=True,
