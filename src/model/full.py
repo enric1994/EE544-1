@@ -16,27 +16,27 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '2.8.4'
+experiment = '2.8.5'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
 epochs = 300
-steps_per_epoch = 200
+steps_per_epoch = 300
 validation_steps=50
 batch_size = 32
-lr=1e-6
+lr=5e-6
 decay=0
 max_lr=1e-1
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
-        rescale=1./255)
-#        zoom_range=0.3,
-#        fill_mode='nearest',
+        rescale=1./255,
+        zoom_range=0.1,
+       fill_mode='nearest',
 #        samplewise_center=True,
 #        samplewise_std_normalization=True,
-        # rotation_range=40)
+        rotation_range=15)
 #        width_shift_range=0.3,
 #        height_shift_range=0.3,
 #        horizontal_flip=True,
@@ -156,8 +156,8 @@ model.fit_generator(
        validation_data=validation_generator,
        callbacks=[
         tbCallBack,
-        checkpoints
-        # reduce_lr
+        checkpoints,
+        reduce_lr
         # tnan
         ],
        shuffle=True,
