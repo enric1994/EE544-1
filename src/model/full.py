@@ -16,14 +16,14 @@ from utils.clr import OneCycleLR
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '2.6.4'
+experiment = '2.7.0'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 500
+epochs = 200
 batch_size = 64
-lr=1e-3
+lr=1e-4
 decay=0
 max_lr=1e-1
 
@@ -70,7 +70,7 @@ test_generator = test_datagen.flow_from_directory(
 model = Sequential()
 model.add(Conv2D(64, (3, 3), input_shape=(224,224,3)))
 model.add(Activation('relu'))
-model.add(Conv2D(64, (3, 3), input_shape=(224,224,3)))
+model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -130,7 +130,7 @@ model.compile(loss = 'binary_crossentropy',
 
 # LR reduce
 reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
-                              patience=10, min_lr=1e-7, verbose=1)
+                              patience=10, min_lr=1e-9, verbose=1)
 
 # Tensorboard
 tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
