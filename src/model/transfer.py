@@ -21,20 +21,20 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.5.1'
+experiment = '3.5.3'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 100
-steps_per_epoch = 300
+epochs = 200
+steps_per_epoch = 200
 validation_steps=50
 batch_size = 64
-lr = 5e-4
+lr = 5e-5
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.05
+l2 = 0.07
 
 
 #Load data + augmentation
@@ -75,7 +75,7 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dropout(0.2)(x)
+x = Dropout(0.5)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
