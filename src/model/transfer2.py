@@ -21,19 +21,19 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.7.5'
+experiment = '3.8.8'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 200
 batch_size = 64
-lr = 1e-6
+lr = 5e-4
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.01
-fine_model = '3.5.3'
+l2 = 0.07
+fine_model = '3.2.13'
 
 
 #Load data + augmentation
@@ -81,7 +81,7 @@ base_model.layers.pop()
 x = base_model.output
 # x = GlobalAveragePooling2D()(x)
 x = Dense(1024, name='dense_2', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
-# x = Dense(1024, name='dense_2', activation='relu')(x)
+# x = Dense(128, name='dense_2', activation='relu')(x)
 # x = BatchNormalization(name='batch_normalization_95')(x)
 # x = Activation('relu',name='activation_95')(x)
 x = Dropout(0.5, name='dropout_2')(x)

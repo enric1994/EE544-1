@@ -21,7 +21,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.5.3'
+experiment = '3.10.8'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -30,11 +30,8 @@ epochs = 200
 steps_per_epoch = 200
 validation_steps=50
 batch_size = 64
-lr = 5e-5
-decay = 0
-max_lr=1e-1
-l1 = 0.005
-l2 = 0.07
+lr = 1e-5
+l2 = 0.005
 
 
 #Load data + augmentation
@@ -75,18 +72,17 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
+x = Dense(512, activation='relu',activity_regularizer=regularizers.l2(l2))(x)
+x = Dropout(0.5)(x)
+x = Dense(128, activation='relu',activity_regularizer=regularizers.l2(l2))(x)
 x = Dropout(0.5)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-for layer in model.layers[:249]:
-   layer.trainable = False
-for layer in model.layers[249:]:
-   layer.trainable = True
-   if isinstance(layer, Conv2D):
-        layer.add_loss(regularizers.l2(l2)(layer.kernel))
+for layer in base_model.layers:
+    layer.trainable = False
 
-
+model.summary()
 # Define optimizer
 opt = optimizers.Adam(lr=lr)
 
@@ -106,9 +102,6 @@ tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 # Checkpoints
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
-# One Cycle
-lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
-                        maximum_momentum=0, minimum_momentum=0, verbose=True)
 # Terminate on NaN
 tnan = callbacks.TerminateOnNaN()
 
