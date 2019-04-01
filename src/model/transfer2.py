@@ -21,19 +21,21 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.4.7'
+experiment = '3.5.0'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 100
+epochs = 200
+steps_per_epoch = 200
+validation_steps=50
 batch_size = 64
-lr = 1e-2
+lr = 5e-5
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.01
-fine_model = '3.2.8'
+l2 = 0.07
+fine_model = '3.5.3'
 
 
 #Load data + augmentation
@@ -41,8 +43,6 @@ train_datagen = ImageDataGenerator(
         rescale=1./255,
         zoom_range=0.1,
        fill_mode='nearest',
-#        samplewise_center=True,
-#        samplewise_std_normalization=True,
         rotation_range=15)
 
 train_generator = train_datagen.flow_from_directory(
@@ -112,7 +112,7 @@ for layer in model.layers[-10:]:
 #         layer.add_loss(regularizers.l2(alpha)(layer.kernel))
 
 # Define optimizer
-opt = optimizers.SGD(lr=lr, decay=decay)
+opt = optimizers.Adam(lr=lr)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -140,10 +140,12 @@ tnan = callbacks.TerminateOnNaN()
 model.fit_generator(
        train_generator,
        epochs=epochs,
+#         steps_per_epoch=steps_per_epoch,
+#        validation_steps=validation_steps,
        validation_data=validation_generator,
        callbacks=[
         tbCallBack,
-        checkpoints,
+        checkpoints
         # tnan
         ],
        shuffle=True,
