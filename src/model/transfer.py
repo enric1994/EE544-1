@@ -21,7 +21,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.10.8'
+experiment = '3.12.0'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
@@ -30,8 +30,8 @@ epochs = 200
 steps_per_epoch = 200
 validation_steps=50
 batch_size = 64
-lr = 1e-5
-l2 = 0.005
+lr = 1e-3
+l2 = 0.001
 
 
 #Load data + augmentation
@@ -72,17 +72,20 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dense(512, activation='relu',activity_regularizer=regularizers.l2(l2))(x)
-x = Dropout(0.5)(x)
-x = Dense(128, activation='relu',activity_regularizer=regularizers.l2(l2))(x)
-x = Dropout(0.5)(x)
+x = Dense(512, activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Dense(128, activation='relu')(x)
+x = Dropout(0.2)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-for layer in base_model.layers:
-    layer.trainable = False
 
-model.summary()
+for layer in base_model.layers[:289]:
+   layer.trainable = False
+
+for layer in base_model.layers[289:]:
+   layer.trainable = True
+
 # Define optimizer
 opt = optimizers.Adam(lr=lr)
 
