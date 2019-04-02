@@ -15,7 +15,7 @@ from utils.telegram import send
 import keras.backend as K
 K.set_floatx('float16')
 
-experiment = '1.6.0'
+experiment = '1.6.1'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
