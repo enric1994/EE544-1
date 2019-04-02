@@ -21,17 +21,17 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.12.1'
+experiment = '3.12.6'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 200
-steps_per_epoch = 200
-validation_steps=50
+# steps_per_epoch = 200
+# validation_steps=50
 batch_size = 64
-lr = 1e-3
-l2 = 0.001
+lr = 1e-4
+l2 = 0.0005
 
 
 #Load data + augmentation
@@ -109,21 +109,21 @@ checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(ex
 tnan = callbacks.TerminateOnNaN()
 
 ## Train model
-model.fit_generator(
-       train_generator,
-       epochs=epochs,
-       steps_per_epoch=steps_per_epoch,
-       validation_steps=validation_steps,
-       validation_data=validation_generator,
-       callbacks=[
-        tbCallBack,
-        checkpoints
-        # tnan
-        ],
-       shuffle=True,
-       verbose=1,
-       workers=4,
-       use_multiprocessing=True)
+# model.fit_generator(
+#        train_generator,
+#        epochs=epochs,
+# #        steps_per_epoch=steps_per_epoch,
+# #        validation_steps=validation_steps,
+#        validation_data=validation_generator,
+#        callbacks=[
+#         tbCallBack,
+#         checkpoints
+#         # tnan
+#         ],
+#        shuffle=True,
+#        verbose=1,
+#        workers=4,
+#        use_multiprocessing=True)
 
 ## Evaluate model
 
