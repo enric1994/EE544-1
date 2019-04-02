@@ -11,32 +11,24 @@ from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatt
 from keras import callbacks
 from keras import optimizers
 from utils.telegram import send
-from utils.clr import OneCycleLR
 
-# import keras.backend as K
-# K.set_floatx('float16')
+import keras.backend as K
+K.set_floatx('float16')
 
-experiment = '1.5.13'
+experiment = '1.6.0'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
 test_path = '/data/resized_224/test'
-epochs = 140
-batch_size = 32
-lr=1e-5
-max_lr=1e-1
+epochs = 200
+batch_size = 128
+lr=5e-2
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
        zoom_range=0.2,
-#        samplewise_center=True,
-#        samplewise_std_normalization=True,
         rotation_range=20)
-#        width_shift_range=0.2,
-#        height_shift_range=0.2,
-#        horizontal_flip=True,
-#        vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -77,13 +69,12 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Flatten())
 model.add(Dropout(0.2))
 model.add(Dense(32))
+model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 # Define optimizer
-opt = optimizers.RMSprop(lr=lr, rho=0.9, epsilon=None, decay=0.0)
-# opt = optimizers.SGD(lr=lr)
-
+opt = optimizers.SGD(lr=lr)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -91,33 +82,21 @@ model.compile(loss = 'binary_crossentropy',
 
 ## Callbacks
 
-# LR reduce
-reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                              patience=15, min_lr=1e-6, verbose=1)
-
 # Tensorboard
 tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 
 # Checkpoints
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
-# One Cycle
-lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
-                        maximum_momentum=0, minimum_momentum=0, verbose=True)
 # Terminate on NaN
 tnan = callbacks.TerminateOnNaN()
-
 
 ## Train model
 model.fit_generator(
        train_generator,
        epochs=epochs,
        validation_data=validation_generator,
-       callbacks=[
-        tbCallBack,
-        checkpoints,
-        # tnan
-        ],
+       callbacks=[tbCallBack, checkpoints, tnan],
        shuffle=True,
        verbose=1,
        workers=4,
@@ -127,8 +106,6 @@ model.fit_generator(
 
 # Load best model
 best_model = load_model('/code/checkpoints/{}.weights'.format(experiment))
-
-
 
 # Forward test images
 results = best_model.evaluate_generator(test_generator,
