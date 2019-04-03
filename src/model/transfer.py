@@ -19,33 +19,40 @@ from keras.applications import InceptionV3
 
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.12.6'
+experiment = '3.14.6'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
-epochs = 200
-# steps_per_epoch = 200
-# validation_steps=50
+epochs = 300
 batch_size = 64
-lr = 1e-4
-l2 = 0.0005
+lr = 1e-6
+decay = 0
+max_lr=1e-1
+alpha = 0.05
+
 
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-        zoom_range=0.1,
+       zoom_range=0.3,
        fill_mode='nearest',
-        rotation_range=15)
+#        samplewise_center=True,
+#        samplewise_std_normalization=True,
+        rotation_range=40,
+       width_shift_range=0.3,
+       height_shift_range=0.3,
+       horizontal_flip=True,
+       vertical_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
         target_size=(299, 299),
         batch_size=batch_size,
-        class_mode='binary')
+        class_mode='binary') 
 
 validation_datagen = ImageDataGenerator(
         rescale=1./255)
@@ -72,22 +79,22 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dense(512, activation='relu', activity_regularizer=regularizers.l2(l2))(x)
-x = Dropout(0.5)(x)
-x = Dense(128, activation='relu', activity_regularizer=regularizers.l2(l2))(x)
-x = Dropout(0.5)(x)
+# x = BatchNormalization()(x)
+# x = Activation('relu')(x)
+# x = Dropout(0.2)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-
-for layer in base_model.layers[:289]:
+for layer in model.layers[:249]:
    layer.trainable = False
-
-for layer in base_model.layers[289:]:
+for layer in model.layers[249:]:
    layer.trainable = True
+   if isinstance(layer, Conv2D):
+        layer.add_loss(regularizers.l2(alpha)(layer.kernel))
+
 
 # Define optimizer
-opt = optimizers.Adam(lr=lr)
+opt = optimizers.Adam(lr=lr, decay=decay)
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -105,25 +112,26 @@ tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 # Checkpoints
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
+# One Cycle
+lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
+                        maximum_momentum=0, minimum_momentum=0, verbose=True)
 # Terminate on NaN
 tnan = callbacks.TerminateOnNaN()
 
 ## Train model
-# model.fit_generator(
-#        train_generator,
-#        epochs=epochs,
-# #        steps_per_epoch=steps_per_epoch,
-# #        validation_steps=validation_steps,
-#        validation_data=validation_generator,
-#        callbacks=[
-#         tbCallBack,
-#         checkpoints
-#         # tnan
-#         ],
-#        shuffle=True,
-#        verbose=1,
-#        workers=4,
-#        use_multiprocessing=True)
+model.fit_generator(
+       train_generator,
+       epochs=epochs,
+       validation_data=validation_generator,
+       callbacks=[
+        tbCallBack,
+        checkpoints,
+        # tnan
+        ],
+       shuffle=True,
+       verbose=1,
+       workers=4,
+       use_multiprocessing=True)
 
 ## Evaluate model
 
@@ -138,10 +146,10 @@ results = best_model.evaluate_generator(test_generator,
         use_multiprocessing=True)
 
 end = time.time()
-total_time = (end - start) // 60
+total_time = (end - start)
 
-send('''Experiment {} finished in {} minutes
+send('''Experiment {} finished in {} seconds
 
 LR: {}
 Test accuracy: {}
-'''.format(experiment, int(total_time), lr, '%.3f'%(results[1]*100)))
+'''.format(experiment, int(total_time), lr, '%.2f'%(results[1]*100)))
