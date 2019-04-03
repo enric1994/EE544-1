@@ -21,27 +21,26 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-experiment = '3.13.0'
+experiment = '3.14.11'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 200
 batch_size = 64
-lr = 5e-4
+lr = 1e-4
 decay = 0
 max_lr=1e-1
 l1 = 0.005
-l2 = 0.07
-fine_model = '3.12.6'
+l2 = 0.001
+fine_model = '3.14.7'
 
 
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-        zoom_range=0.1,
-       fill_mode='nearest',
-        rotation_range=15)
+       zoom_range=0.2,
+        rotation_range=20)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -70,9 +69,32 @@ test_generator = test_datagen.flow_from_directory(
 
 
 # Define model
-# base_model = InceptionV3(weights='imagenet', include_top=False)
-model = load_model('/code/checkpoints/{}.weights'.format(fine_model))
+base_model = load_model('/code/checkpoints/{}.weights'.format(fine_model))
 
+# Remove last 2 layers
+base_model.layers.pop()
+base_model.layers.pop()
+
+
+x = base_model.output
+# x = GlobalAveragePooling2D()(x)
+x = Dense(1024, name='dense_2', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_95')(x)
+# x = Activation('relu',name='activation_95')(x)
+x = Dropout(0.5, name='dropout_2')(x)
+
+x = Dense(512, name='dense_3', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_96')(x)
+# x = Activation('relu',name='activation_96')(x)
+x = Dropout(0.5, name='dropout_3')(x)
+
+x = Dense(128, name='dense_4', activation='relu', activity_regularizer=regularizers.l2(l2))(x)
+# x = BatchNormalization(name='batch_normalization_97')(x)
+# x = Activation('relu',name='activation_97')(x)
+x = Dropout(0.5, name='dropout_4')(x)
+
+predictions = Dense(1, name='dense_5', activation='sigmoid')(x)
+model = Model(inputs=base_model.input, outputs=predictions)
 for layer in model.layers[:249]:
    layer.trainable = False
 for layer in model.layers[249:]:
