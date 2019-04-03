@@ -6,3 +6,4 @@ logs/
 checkpoints/
 .Trash-0/
 *.npy
+heatmaps/
