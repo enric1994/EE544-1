@@ -21,14 +21,14 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
-experiment = '3.14.6'
+experiment = '3.14.7'
 
 train_path = '/data/resized_299/train'
 validation_path = '/data/resized_299/validation'
 test_path = '/data/resized_299/test'
 epochs = 300
 batch_size = 64
-lr = 1e-6
+lr = 7e-4
 decay = 0
 max_lr=1e-1
 alpha = 0.05
@@ -38,15 +38,8 @@ alpha = 0.05
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-       zoom_range=0.3,
-       fill_mode='nearest',
-#        samplewise_center=True,
-#        samplewise_std_normalization=True,
-        rotation_range=40,
-       width_shift_range=0.3,
-       height_shift_range=0.3,
-       horizontal_flip=True,
-       vertical_flip=True)
+       zoom_range=0.2,
+        rotation_range=20)
 
 train_generator = train_datagen.flow_from_directory(
         train_path,
@@ -81,7 +74,7 @@ x = base_model.output
 x = GlobalAveragePooling2D()(x)
 # x = BatchNormalization()(x)
 # x = Activation('relu')(x)
-# x = Dropout(0.2)(x)
+x = Dropout(0.2)(x)
 predictions = Dense(1, activation='sigmoid')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
