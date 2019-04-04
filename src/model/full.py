@@ -16,7 +16,7 @@ from utils.clr import OneCycleLR
 # import keras.backend as K
 # K.set_floatx('float16')
 
-experiment = '2.9.1'
+experiment = '2.9.0'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -32,9 +32,8 @@ max_lr=1e-1
 #Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
-       zoom_range=0.3,
-       fill_mode='nearest',
-        rotation_range=40)
+       zoom_range=0.2,
+        rotation_range=20)
 
 
 train_generator = train_datagen.flow_from_directory(
