@@ -11,12 +11,8 @@ from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Dropout, Flatt
 from keras import callbacks
 from keras import optimizers
 from utils.telegram import send
-from utils.clr import OneCycleLR
 
-# import keras.backend as K
-# K.set_floatx('float16')
-
-experiment = '2.9.0'
+experiment = '2.9.0.final'
 
 train_path = '/data/resized_224/train'
 validation_path = '/data/resized_224/validation'
@@ -27,9 +23,8 @@ validation_steps=50
 batch_size = 32
 lr=5e-6
 decay=0
-max_lr=1e-1
 
-#Load data + augmentation
+## Load data + augmentation
 train_datagen = ImageDataGenerator(
         rescale=1./255,
        zoom_range=0.2,
@@ -60,8 +55,7 @@ test_generator = test_datagen.flow_from_directory(
         batch_size=batch_size,
         class_mode='binary')
 
-
-# Define model
+## Define model
 
 model = Sequential()
 model.add(Conv2D(64, (3, 3), input_shape=(224,224,3)))
@@ -112,10 +106,8 @@ model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
-# Define optimizer
+## Define optimizer
 opt = optimizers.Adam(lr=lr,decay=decay)
-# opt = optimizers.SGD(lr=lr)
-
 
 model.compile(loss = 'binary_crossentropy',
               optimizer = opt,
@@ -123,22 +115,11 @@ model.compile(loss = 'binary_crossentropy',
 
 ## Callbacks
 
-# LR reduce
-reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
-                              patience=10, min_lr=1e-9, verbose=1)
-
 # Tensorboard
 tbCallBack = callbacks.TensorBoard(log_dir='/code/logs/{}'.format(experiment))
 
 # Checkpoints
 checkpoints = callbacks.ModelCheckpoint('/code/checkpoints/{}.weights'.format(experiment), monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
-
-# One Cycle
-lr_manager = OneCycleLR(max_lr, batch_size, 1600, scale_percentage=0.1,
-                        maximum_momentum=0, minimum_momentum=0, verbose=True)
-# Terminate on NaN
-tnan = callbacks.TerminateOnNaN()
-
 
 ## Train model
 model.fit_generator(
@@ -149,9 +130,7 @@ model.fit_generator(
        validation_data=validation_generator,
        callbacks=[
         tbCallBack,
-        checkpoints,
-        reduce_lr
-        # tnan
+        checkpoints
         ],
        shuffle=True,
        verbose=1,
@@ -164,7 +143,6 @@ model.fit_generator(
 best_model = load_model('/code/checkpoints/{}.weights'.format(experiment))
 
 
-
 # Forward test images
 results = best_model.evaluate_generator(test_generator,
         workers=4,
@@ -174,7 +152,6 @@ end = time.time()
 total_time = (end - start)
 
 send('''Experiment {} finished in {} seconds
-
 LR: {}
 Test accuracy: {}
 '''.format(experiment, int(total_time), lr, '%.2f'%(results[1]*100)))

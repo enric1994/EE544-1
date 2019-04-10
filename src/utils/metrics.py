@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) Copyright 2019 Enric Moreu. All Rights Reserved.
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model, load_model
